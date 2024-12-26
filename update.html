@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Dictionary</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Update Dictionary</h1>
+        <input type="text" id="username" placeholder="Admin Username">
+        <input type="password" id="password" placeholder="Admin Password">
+        <input type="number" id="file_number" placeholder="File Number (optional)" min="1">
+        <textarea id="data" placeholder='New Data (JSON format)'></textarea>
+        <button onclick="updateDictionary()">Update Data</button>
+        <div id="result"></div>
+    </div>
+    <script src="script.js"></script>
+    <script>
+        function updateDictionary() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const fileNumber = document.getElementById('file_number').value.trim();
+            const data = document.getElementById('data').value.trim();
+
+            if (!username || !password) {
+                document.getElementById('result').innerText = "Username and Password are required.";
+                return;
+            }
+
+            fetch('http://127.0.0.1:5000/update_data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username,
+                    password,
+                    file_number: fileNumber ? parseInt(fileNumber) : undefined,
+                    data: data ? JSON.parse(data) : {}
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('result').innerText = data.error;
+                    } else {
+                        document.getElementById('result').innerHTML = `
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        `;
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('result').innerText = "Error updating data.";
+                });
+        }
+    </script>
+</body>
+</html>
