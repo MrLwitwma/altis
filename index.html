@@ -22,7 +22,7 @@
                 return;
             }
 
-            fetch(`http://127.0.0.1:5000/get_data?word=${word}`)
+            fetch(`https://mrlwitwma1.pythonanywhere.com/get_data?word=${word}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {
