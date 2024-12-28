@@ -3,39 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fetch Word</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Dictionary Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            background: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1>Word Fetcher</h1>
-        <input type="text" id="word" placeholder="Enter a word">
-        <button onclick="fetchWord()">Get Word</button>
-        <div id="result"></div>
+        <h1>Dictionary Search</h1>
+        <input type="text" id="searchQuery" placeholder="Enter a word...">
+        <select id="matchType">
+            <option value="exact">Exact Match</option>
+            <option value="similar">Most Similar Match</option>
+        </select>
+        <button onclick="searchWord()">Search</button>
+        <div id="result" class="result"></div>
     </div>
-    <script src="script.js"></script>
+
     <script>
-        function fetchWord() {
-            const word = document.getElementById('word').value.trim().toLowerCase();
-            if (!word) {
-                document.getElementById('result').innerText = "Please enter a word.";
+        async function searchWord() {
+            const query = document.getElementById("searchQuery").value;
+            const matchType = document.getElementById("matchType").value;
+            const resultDiv = document.getElementById("result");
+
+            if (!query) {
+                resultDiv.innerHTML = "Please enter a word.";
                 return;
             }
 
-            fetch(`https://mrlwitwma1.pythonanywhere.com/get_data?word=${word}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        document.getElementById('result').innerText = data.error;
-                    } else {
-                        document.getElementById('result').innerHTML = `
-                            <pre>${JSON.stringify(data, null, 2)}</pre>
-                        `;
-                    }
-                })
-                .catch(err => {
-                    document.getElementById('result').innerText = "Error fetching data.";
-                });
+            const response = await fetch('http://127.0.0.1:5000/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ query, match_type: matchType })
+            });
+
+            const data = await response.json();
+            if (data.message) {
+                resultDiv.innerHTML = `<strong>${data.message}</strong>`;
+            } else {
+                resultDiv.innerHTML = `
+                    <strong>Word:</strong> ${data.word}<br>
+                    <strong>Definition:</strong> ${data.details.definition}<br>
+                    <strong>Synonyms:</strong> ${data.details.synonyms.join(", ")}<br>
+                    <strong>Examples:</strong> ${data.details.examples.join(", ")}
+                `;
+            }
         }
     </script>
 </body>
