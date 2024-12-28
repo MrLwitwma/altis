@@ -3,92 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dictionary Search</title>
+    <title>Altis Dictionary</title>
     <style>
+        /* Global Styles */
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a2e;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
+        
+        /* Container */
         .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
+            max-width: 700px;
+            width: 100%;
+            background-color: #162447;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             text-align: center;
         }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #e94560;
+        }
+
+        /* Input Fields */
         input[type="text"] {
             width: calc(100% - 20px);
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        button {
-            padding: 10px 20px;
+            padding: 12px 10px;
+            margin-bottom: 15px;
             border: none;
-            background: #007bff;
-            color: white;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            box-shadow: 0 0 5px rgba(233, 69, 96, 0.8);
+        }
+
+        /* Buttons */
+        button {
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #fff;
+            background: #e94560;
+            border: none;
             border-radius: 5px;
             cursor: pointer;
+            transition: background 0.3s ease;
+            margin: 5px;
         }
+
         button:hover {
-            background: #0056b3;
+            background: #cf3a55;
         }
+
+        /* Result Section */
         .result {
             margin-top: 20px;
-            padding: 10px;
-            background: #f9f9f9;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            padding: 20px;
+            background: #1f4068;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .result div{
+            text-align: left;
+        }
+
+        .result strong {
+            color: #e94560;
+        }
+
+        /* Media Queries */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            button {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Dictionary Search</h1>
+        <h1>Altis Dictionary</h1>
         <input type="text" id="searchQuery" placeholder="Enter a word...">
-        <select id="matchType">
-            <option value="exact">Exact Match</option>
-            <option value="similar">Most Similar Match</option>
-        </select>
         <button onclick="searchWord()">Search</button>
         <div id="result" class="result"></div>
     </div>
 
     <script>
         async function searchWord() {
-            const query = document.getElementById("searchQuery").value;
-            const matchType = document.getElementById("matchType").value;
+            const query = document.getElementById("searchQuery").value.trim();
             const resultDiv = document.getElementById("result");
 
             if (!query) {
-                resultDiv.innerHTML = "Please enter a word.";
+                resultDiv.innerHTML = "<strong>Please enter a word.</strong>";
                 return;
             }
 
-            const response = await fetch('https://MrLwitwma1.pythonanywhere.com/search', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ query, match_type: matchType })
-            });
+            try {
+                // First attempt: Exact match
+                let response = await fetch('https://mrlwitwma1.pythonanywhere.com/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query, match_type: "exact" })
+                });
 
-            const data = await response.json();
-            if (data.message) {
-                resultDiv.innerHTML = `<strong>${data.message}</strong>`;
-            } else {
-                resultDiv.innerHTML = `
-                    <strong>Word:</strong> ${data.word}<br>
-                    <strong>Definition:</strong> ${data.details.definition}<br>
-                    <strong>Synonyms:</strong> ${data.details.synonyms.join(", ")}<br>
-                    <strong>Examples:</strong> ${data.details.examples.join(", ")}
-                `;
+                let data = await response.json();
+
+                if (data.response === false) {
+                    // No exact match, attempt similar match
+                    response = await fetch('https://mrlwitwma1.pythonanywhere.com/search', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ query, match_type: "similar" })
+                    });
+
+                    data = await response.json();
+
+                    if (data.response === false) {
+                        resultDiv.innerHTML = "<strong>No match found.</strong>";
+                    } else {
+                        resultDiv.innerHTML = `
+                            <i>Found data for <u><b>${data.word}</b></u> instead of <b><u>${query}</b></u></i><br>
+                            <div>
+                            <strong>Word:</strong> ${data.word}<br>
+                            <strong>Definition:</strong> ${data.details.definition}<br>
+                            <strong>Synonyms:</strong> ${data.details.synonyms.join(", ")}<br>
+                            <strong>Examples:</strong> ${data.details.examples.join(", ")}
+                            </div>
+                        `;
+                    }
+                } else {
+                    resultDiv.innerHTML = `
+                        <div>
+                        <strong>Word:</strong> ${data.word}<br>
+                        <strong>Definition:</strong> ${data.details.definition}<br>
+                        <strong>Synonyms:</strong> ${data.details.synonyms.join(", ")}<br>
+                        <strong>Examples:</strong> ${data.details.examples.join(", ")}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<strong>Error:</strong> Unable to fetch results. Please try again later.`;
             }
         }
     </script>
