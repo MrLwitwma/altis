@@ -146,9 +146,10 @@
                             <i>Found data for <u><b>${data.word}</b></u> instead of <b><u>${query}</b></u></i><br>
                             <div>
                             <strong>Word:</strong> ${data.word}<br>
+                            <strong>Translation:</strong> ${data.details.translation.join(", ")}<br>
                             <strong>Definition:</strong> ${data.details.definition}<br>
                             <strong>Synonyms:</strong> ${data.details.synonyms.join(", ")}<br>
-                            <strong>Examples:</strong> ${data.details.examples.join(", ")}
+                            <strong>Examples:</strong> <ul> <li>${data.details.examples.join("</li><li>")}</li><ul>
                             </div>
                         `;
                     }
@@ -156,9 +157,10 @@
                     resultDiv.innerHTML = `
                         <div>
                         <strong>Word:</strong> ${data.word}<br>
+                        <strong>Translation:</strong> ${data.details.translation.join(", ")}<br>
                         <strong>Definition:</strong> ${data.details.definition}<br>
                         <strong>Synonyms:</strong> ${data.details.synonyms.join(", ")}<br>
-                        <strong>Examples:</strong> ${data.details.examples.join(", ")}
+                        <strong>Examples:</strong> <ul> <li>${data.details.examples.join("</li><li>")}</li><ul>
                         </div>
                     `;
                 }

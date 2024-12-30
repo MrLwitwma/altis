@@ -21,6 +21,10 @@
                         <input type="text" id="word" class="form-control" placeholder="Enter new word" required>
                     </div>
                     <div class="col-md-6">
+                        <label for="translation" class="form-label">Translation</label>
+                        <input type="text" id="translation" class="form-control" placeholder="Enter Translation (comma-separated)">
+                    </div>
+                    <div class="col-md-6">
                         <label for="definition" class="form-label">Definition</label>
                         <textarea id="definition" class="form-control" rows="2" placeholder="Enter definition"></textarea>
                     </div>
@@ -55,6 +59,10 @@
                         <div class="col-md-6">
                             <label for="newWord" class="form-label">New Word</label>
                             <input type="text" id="newWord" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editTranslation" class="form-label">Translations</label>
+                            <input type="text" id="editTranslation" class="form-control">
                         </div>
                         <div class="col-md-6">
                             <label for="editDefinition" class="form-label">Definition</label>
@@ -119,12 +127,13 @@
             e.preventDefault();
             const word = document.getElementById("word").value;
             const definition = document.getElementById("definition").value;
+            const translation = document.getElementById("translation").value.split(",");
             const synonyms = document.getElementById("synonyms").value.split(",");
             const examples = document.getElementById("examples").value.split(",");
             const response = await fetch(apiUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ word, details: { definition, synonyms, examples } }),
+                body: JSON.stringify({ word, details: {translation, definition, synonyms, examples } }),
             });
             alert((await response.json()).message);
             fetchWords();
@@ -139,6 +148,7 @@
                 const details = data[word];
                 document.getElementById("editFields").style.display = "block";
                 document.getElementById("newWord").value = word;
+                document.getElementById("editTranslation").value = details.translation.join(",")
                 document.getElementById("editDefinition").value = details.definition;
                 document.getElementById("editSynonyms").value = details.synonyms.join(",");
                 document.getElementById("editExamples").value = details.examples.join(",");
@@ -152,13 +162,14 @@
             e.preventDefault();
             const word = document.getElementById("editWord").value;
             const newWord = document.getElementById("newWord").value;
+            const translation = document.getElementById("editTranslation").value;
             const definition = document.getElementById("editDefinition").value;
             const synonyms = document.getElementById("editSynonyms").value.split(",");
             const examples = document.getElementById("editExamples").value.split(",");
             const response = await fetch(`${apiUrl}/${word}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ new_word: newWord, details: { definition, synonyms, examples } }),
+                body: JSON.stringify({ new_word: newWord, details: {translation, definition, synonyms, examples } }),
             });
             alert((await response.json()).message);
             fetchWords();
