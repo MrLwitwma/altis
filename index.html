@@ -3,6 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- <link rel="icon" href="https://mrlwitwma.000webhostapp.com/img/lina.svg" type="image/x-icon"> -->
+    <meta property="og:title" content="Altis English-Bodo Dictionary">
+    <meta property="og:description" content="Altis English-Bodo Dictionary is a free to use online Dictionary with over 5000+ words.">
+    <!-- <meta property="og:image" content="/static/lina.svg?v=1"> -->
+     
     <title>Altis Dictionary</title>
     <style>
         /* Global Styles */
@@ -106,15 +112,22 @@
     </div>
 
     <script>
-        async function searchWord() {
-            const query = document.getElementById("searchQuery").value.trim();
+        // Function to get URL parameters
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+    
+        // Function to perform the search
+        async function searchWord(queryFromURL) {
+            const query = queryFromURL || document.getElementById("searchQuery").value.trim();
             const resultDiv = document.getElementById("result");
-
+    
             if (!query) {
                 resultDiv.innerHTML = "<strong>Please enter a word.</strong>";
                 return;
             }
-
+    
             try {
                 // First attempt: Exact match
                 let response = await fetch('https://mrlwitwma1.pythonanywhere.com/search', {
@@ -124,9 +137,9 @@
                     },
                     body: JSON.stringify({ query, match_type: "exact" })
                 });
-
+    
                 let data = await response.json();
-
+    
                 if (data.response === false) {
                     // No exact match, attempt similar match
                     response = await fetch('https://mrlwitwma1.pythonanywhere.com/search', {
@@ -136,9 +149,9 @@
                         },
                         body: JSON.stringify({ query, match_type: "similar" })
                     });
-
+    
                     data = await response.json();
-
+    
                     if (data.response === false) {
                         resultDiv.innerHTML = "<strong>No match found.</strong>";
                     } else {
@@ -146,7 +159,7 @@
                             <i>Found data for <u><b>${data.word}</b></u> instead of <b><u>${query}</b></u></i><br>
                             <div>
                             <strong>Word:</strong> ${data.word}<br>
-                            <strong>Translation:</strong> ${data.details.translation.join(", ")}<br>
+                            <strong>Translation:</strong> ${data.details.translation}<br>
                             <strong>Definition:</strong> ${data.details.definition}<br>
                             <strong>Synonyms:</strong> ${data.details.synonyms.join(", ")}<br>
                             <strong>Examples:</strong> <ul> <li>${data.details.examples.join("</li><li>")}</li><ul>
@@ -157,7 +170,7 @@
                     resultDiv.innerHTML = `
                         <div>
                         <strong>Word:</strong> ${data.word}<br>
-                        <strong>Translation:</strong> ${data.details.translation.join(", ")}<br>
+                        <strong>Translation:</strong> ${data.details.translation}<br>
                         <strong>Definition:</strong> ${data.details.definition}<br>
                         <strong>Synonyms:</strong> ${data.details.synonyms.join(", ")}<br>
                         <strong>Examples:</strong> <ul> <li>${data.details.examples.join("</li><li>")}</li><ul>
@@ -165,9 +178,19 @@
                     `;
                 }
             } catch (error) {
+                console.log(error)
                 resultDiv.innerHTML = `<strong>Error:</strong> Unable to fetch results. Please try again later.`;
             }
         }
-    </script>
+    
+        // Automatically fetch word if `prompt` parameter exists in URL
+        document.addEventListener("DOMContentLoaded", () => {
+            const prompt = getQueryParam('prompt');
+            if (prompt) {
+                document.getElementById("searchQuery").value = prompt;
+                searchWord(prompt);
+            }
+        });
+    </script>    
 </body>
 </html>
