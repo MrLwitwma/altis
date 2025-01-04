@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- <link rel="icon" href="https://mrlwitwma.000webhostapp.com/img/lina.svg" type="image/x-icon"> -->
+    <link rel="icon" href="static/altislogo.svg" type="image/x-icon">
     <meta property="og:title" content="Altis English-Bodo Dictionary">
     <meta property="og:description" content="Altis English-Bodo Dictionary is a free to use online Dictionary with over 5000+ words.">
-    <!-- <meta property="og:image" content="/static/lina.svg?v=1"> -->
+    <meta property="og:image" content="static/altis.svg?v=1" src="static/altis.svg">
      
     <title>Altis Dictionary</title>
     <style>
@@ -122,6 +122,8 @@
         async function searchWord(queryFromURL) {
             const query = queryFromURL || document.getElementById("searchQuery").value.trim();
             const resultDiv = document.getElementById("result");
+            const fetchURL = 'https://mrlwitwma1.pythonanywhere.com/search'
+            // const fetchURL = 'http://127.0.0.1:5000/search'
     
             if (!query) {
                 resultDiv.innerHTML = "<strong>Please enter a word.</strong>";
@@ -130,7 +132,7 @@
     
             try {
                 // First attempt: Exact match
-                let response = await fetch('https://mrlwitwma1.pythonanywhere.com/search', {
+                let response = await fetch(fetchURL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -142,7 +144,7 @@
     
                 if (data.response === false) {
                     // No exact match, attempt similar match
-                    response = await fetch('https://mrlwitwma1.pythonanywhere.com/search', {
+                    response = await fetch(fetchURL, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
