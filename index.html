@@ -101,6 +101,27 @@
                 width: 100%;
             }
         }
+
+        .loader{
+            margin: 0px auto;
+            height: 20px;
+            width: 80%;
+            background: white;
+            border-radius: 40px;
+            animation: loading 2s linear infinite;
+        }
+        @keyframes loading{
+            0%, 100%{
+                width: 0;
+                opacity: 0.5;
+                scale: 0.99;
+            }
+            50%{
+                width: 80%;
+                opacity: 1;
+                scale: 1;
+            }
+        }
     </style>
 </head>
 <body>
@@ -108,7 +129,8 @@
         <h1>Altis Dictionary</h1>
         <input type="text" id="searchQuery" placeholder="Enter a word...">
         <button onclick="searchWord()">Search</button>
-        <div id="result" class="result"></div>
+        <div id="result" class="result">
+        </div>
     </div>
 
     <script>
@@ -117,6 +139,29 @@
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get(param);
         }
+
+        function loading_message(box) {
+            if (box.innerHTML == '<strong>No match found.</strong>'){
+                box.innerHTML = ''
+            }
+            const loaderDiv = document.createElement('div');
+            loaderDiv.classList.add('loader');
+            box.appendChild(loaderDiv);
+        }
+        
+        function loaded_message(box) {
+            const loaders = box.querySelectorAll('.loader');
+            loaders.forEach(loader => {
+                loader.parentNode.removeChild(loader);
+            });
+        }  
+
+        const searchQuery = document.getElementById('searchQuery')
+        searchQuery.addEventListener('keydown', (event)=>{
+            if (event.key === 'Enter' && searchQuery.value !== '') {
+                searchWord()
+            }
+        })
     
         // Function to perform the search
         async function searchWord(queryFromURL) {
@@ -129,6 +174,8 @@
                 resultDiv.innerHTML = "<strong>Please enter a word.</strong>";
                 return;
             }
+
+            loading_message(resultDiv)
     
             try {
                 // First attempt: Exact match
@@ -137,47 +184,37 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ query, match_type: "exact" })
+                    body: JSON.stringify({ query, match_type: "similar" })
                 });
     
                 let data = await response.json();
-    
+
+                loaded_message(resultDiv)
+
                 if (data.response === false) {
-                    // No exact match, attempt similar match
-                    response = await fetch(fetchURL, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ query, match_type: "similar" })
-                    });
-    
-                    data = await response.json();
-    
-                    if (data.response === false) {
-                        resultDiv.innerHTML = "<strong>No match found.</strong>";
-                    } else {
-                        resultDiv.innerHTML = `
-                            <i>Found data for <u><b>${data.word}</b></u> instead of <b><u>${query}</b></u></i><br>
-                            <div>
-                            <strong>Word:</strong> ${data.word}<br>
-                            <strong>Translation:</strong> ${data.details.translation}<br>
-                            <strong>Definition:</strong> ${data.details.definition}<br>
-                            <strong>Synonyms:</strong> ${data.details.synonyms.join(", ")}<br>
-                            <strong>Examples:</strong> <ul> <li>${data.details.examples.join("</li><li>")}</li><ul>
-                            </div>
-                        `;
-                    }
+                    console.log('false')
+                    resultDiv.innerHTML = "<strong>No match found.</strong>";
                 } else {
-                    resultDiv.innerHTML = `
+                    console.log('here')
+                    if (data.word.toLowerCase() !== query.toLowerCase().trim()){
+                        resultDiv.innerHTML = `<i>Found data for <u><b>${data.word}</b></u> instead of <b><u>${query}</b></u></i><br>
                         <div>
                         <strong>Word:</strong> ${data.word}<br>
                         <strong>Translation:</strong> ${data.details.translation}<br>
                         <strong>Definition:</strong> ${data.details.definition}<br>
                         <strong>Synonyms:</strong> ${data.details.synonyms.join(", ")}<br>
                         <strong>Examples:</strong> <ul> <li>${data.details.examples.join("</li><li>")}</li><ul>
+                        </div>`
+                    } else{
+                        resultDiv.innerHTML = `<div>
+                        <strong>Word:</strong> ${data.word}<br>
+                        <strong>Translation:</strong> ${data.details.translation}<br>
+                        <strong>Definition:</strong> ${data.details.definition}<br>
+                        <strong>Synonyms:</strong> ${data.details.synonyms.join(", ")}<br>
+                        <strong>Examples:</strong> <ul> <li>${data.details.examples.join("</li><li>")}</li><ul>
                         </div>
-                    `;
+                        `
+                    }
                 }
             } catch (error) {
                 console.log(error)
@@ -196,3 +233,13 @@
     </script>    
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
