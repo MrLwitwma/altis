@@ -122,9 +122,39 @@
                 scale: 1;
             }
         }
+        #permissionsbg{
+            position: absolute;
+            z-index: 99;
+            width: 100%;
+            height: 100%;
+            background: rgb(0, 0, 0, 0.7);
+            display: none;
+        }
+        #permissions{
+            z-index: 100;
+            position: absolute;
+            background: white;
+            padding: 30px;
+            color: black;
+            border-radius: 20px;
+            text-align: center;
+            width: 50%;
+            min-width: 250px;
+            display: none;
+        }
+        h3, p{
+            margin: 0;
+        }
     </style>
 </head>
 <body>
+    <div id="permissionsbg"></div>
+    <div id="permissions">
+        <h3>Press Connect button to generate a API for your device.</h3>
+        <p>(A Key will be generated which will allow you to use the dictionary <a href="/terms/" target="_blank">more info</a>)</p>
+        <button id="connectButton">Connect</button>
+    </div>
+
     <div class="container">
         <h1>Altis Dictionary</h1>
         <input type="text" id="searchQuery" placeholder="Enter a word...">
@@ -134,6 +164,9 @@
     </div>
 
     <script>
+        const fetchURL = 'https://mrlwitwma1.pythonanywhere.com/search'
+        // const fetchURL = 'http://127.0.0.1:5000'
+
         // Function to get URL parameters
         function getQueryParam(param) {
             const urlParams = new URLSearchParams(window.location.search);
@@ -167,24 +200,28 @@
         async function searchWord(queryFromURL) {
             const query = queryFromURL || document.getElementById("searchQuery").value.trim();
             const resultDiv = document.getElementById("result");
-            const fetchURL = 'https://mrlwitwma1.pythonanywhere.com/search'
-            // const fetchURL = 'http://127.0.0.1:5000/search'
     
+            
             if (!query) {
                 resultDiv.innerHTML = "<strong>Please enter a word.</strong>";
                 return;
+            }
+            else if (query.length >= 100){
+                resultDiv.innerHTML = '<strong>Word is too long</strong>'
+                return
             }
 
             loading_message(resultDiv)
     
             try {
                 // First attempt: Exact match
-                let response = await fetch(fetchURL, {
+                const apiKey = checkAPI()
+                let response = await fetch(fetchURL + '/search', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ query, match_type: "similar" })
+                    body: JSON.stringify({query, apiKey, match_type: "similar" })
                 });
     
                 let data = await response.json();
@@ -192,8 +229,20 @@
                 loaded_message(resultDiv)
 
                 if (data.response === false) {
-                    console.log('false')
-                    resultDiv.innerHTML = "<strong>No match found.</strong>";
+                    if (data.errorcode === 520){
+                        resultDiv.innerHTML = `<strong>${data.message}</strong>`;
+                    } else if (data.errorcode === 521){
+                        resultDiv.innerHTML = `<strong>${data.message}</strong>`;
+                    } else if (data.errorcode === 403){
+                        resultDiv.innerHTML = `<strong>API Key error try again. Reload the page or clear cookies and try again!</strong>`;
+                        localStorage.setItem(BUTTON_FLAG, "false")
+                        setTimeout(() => {
+                            initializeButton()
+                        }, 3000);
+                    }
+                    else{
+                        resultDiv.innerHTML = '<strong>Unable to find word</strong>'
+                    }
                 } else {
                     console.log('here')
                     if (data.word.toLowerCase() !== query.toLowerCase().trim()){
@@ -230,16 +279,96 @@
                 searchWord(prompt);
             }
         });
-    </script>    
+    </script>
+
+    <script>
+        const BUTTON_FLAG = "button_clicked";
+
+        // Check if the button has already been clicked
+        function checkButtonState() {
+            return localStorage.getItem(BUTTON_FLAG) === "true";
+        }
+
+        // Store the button click state
+        function setButtonState() {
+            localStorage.setItem(BUTTON_FLAG, "true");
+        }
+
+        // Initialize the button state on page load
+        function initializeButton() {
+            const permissions = document.getElementById("permissions");
+            const permissionsbg = document.getElementById("permissionsbg");
+            const button = document.getElementById("connectButton");
+
+            // Check if both elements exist
+            if (permissions && permissionsbg) {
+                if (!checkButtonState()) {
+                    permissions.style.display = 'block'; // Show the button if it hasn't been clicked
+                    permissionsbg.style.display = 'block';
+                    button.addEventListener("click", handleButtonClick);
+                }
+            } else {
+                console.error("Required elements not found.");
+            }
+        }
+
+
+        function handleButtonClick() {
+            const permissions = document.getElementById("permissions");
+            const permissionsbg = document.getElementById("permissionsbg");
+            permissions.style.display = 'none'; // Hide the button immediately
+            permissionsbg.style.display = 'none'; // Hide the button immediately
+            setButtonState(); // Save the button state
+            const deviceId = getDeviceId();
+
+            // Fetch the API key
+            fetch(`${fetchURL}/get_api`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ device_id: deviceId })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    checkAPI(data);
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                });
+        }
+
+        function checkAPI(data) {
+            if (data && data.apiKey) {
+                // Store the API key in localStorage if data is provided
+                localStorage.setItem("apiKey", data.apiKey);
+                // console.log("API Key stored in localStorage:", data.apiKey);
+            } else {
+                // Retrieve and return the API key from localStorage if no data is passed
+                const storedApiKey = localStorage.getItem("apiKey");
+                if (storedApiKey) {
+                    // console.log("Retrieved API Key from localStorage:", storedApiKey);
+                    return storedApiKey;
+                } else {
+                    console.log("No API Key found in localStorage.");
+                    return null;
+                }
+            }
+        }
+        
+
+        function getDeviceId() {
+            let deviceId = localStorage.getItem("device_id");
+            if (!deviceId) {
+                deviceId = crypto.randomUUID(); // Generate a new UUID
+                localStorage.setItem("device_id", deviceId);
+            }
+            return deviceId;
+        }
+
+        // Initialize the button on page load
+        initializeButton();
+    </script>
+</body>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
